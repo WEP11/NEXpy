@@ -75,7 +75,7 @@ ds.access_urls
 
 data = Dataset(ds.access_urls['CdmRemote'])
 
-print (data.variables) ### DEBUG
+#print (data.variables) ### DEBUG
 
 # We have to turn the user variable into the correct variable to pull...
 if (args.product=='TR0' or args.product=='N0Q'):
