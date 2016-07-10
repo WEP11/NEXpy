@@ -11,6 +11,7 @@
 
 
 import argparse
+import sys
 
 from siphon.radarserver import RadarServer
 from datetime import datetime
@@ -18,11 +19,13 @@ from siphon.cdmr import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
 import cartopy
-from metpy.plots import ctables
 
+from metpy.plots import ctables
 #from mpl_toolkits.basemap import Basemap, shiftgrid
 
+import validation
 #------------------------------------------------------
+
 # Command Line Functions:
 parser = argparse.ArgumentParser(description='NEXRAD/TDWR Site Information')
 
@@ -42,10 +45,19 @@ minute = datetime.today().minute
 
 ## TODO: Find previous frame times. timedelta?
 
+# What type of radar site is this?..
+	
+siteType = validation.checkRadarType(args.site)
+
+if siteType=='88D':
+	rs = RadarServer('http://thredds.ucar.edu/thredds/radarServer/nexrad/level3/IDD/')
+elif siteType=='TDWR':
+	rs = RadarServer('http://thredds.ucar.edu/thredds/radarServer/terminal/level3/IDD/')
+else:
+	print('INVALID SITE IDENTIFIER')
+	sys.exit()
 
 # ACQUIRE DATA ----------------------------------------
-
-rs = RadarServer('http://thredds.ucar.edu/thredds/radarServer/terminal/level3/IDD/')
 
 query = rs.query()
 query.stations(args.site).time(datetime(year, month, day, hour, minute)).variables(args.product)
@@ -62,11 +74,20 @@ ds.access_urls
 # READ DATA ------------------------------------------
 
 data = Dataset(ds.access_urls['CdmRemote'])
-#print data.variables ### DEBUG
+
+print (data.variables) ### DEBUG
+
+# We have to turn the user variable into the correct variable to pull...
+if (args.product=='TR0' or args.product=='N0Q'):
+	ncfVar='BaseReflectivity'
+	colorTable='NWSReflectivity'
+elif (args.product=='TV0' or args.product=='N0V'):
+	ncfVar='RadialVelocity'
+	colorTable='NWSVelocity'
 
 rng = data.variables['gate'][:]
 az = data.variables['azimuth'][:]
-ref = data.variables['BaseReflectivity'][:]
+ref = data.variables[ncfVar][:]
 
 x = rng * np.sin(np.deg2rad(az))[:, None]
 y = rng * np.cos(np.deg2rad(az))[:, None]
@@ -95,9 +116,9 @@ ax.add_geometries(counties.geometries(), cartopy.crs.PlateCarree(),
                   facecolor='#C2A385', edgecolor='grey', zorder=1)
 
 # Interstates
-interstate = cartopy.io.shapereader.Reader('data/interstates')
-ax.add_geometries(interstate.geometries(), cartopy.crs.PlateCarree(),
-                  facecolor='none', edgecolor='#B20000', zorder=1)
+#interstate = cartopy.io.shapereader.Reader('data/interstates')
+#ax.add_geometries(interstate.geometries(), cartopy.crs.PlateCarree(),
+#                  facecolor='none', edgecolor='#B20000', zorder=1)
 
 # Hydrography
 #hydro = cartopy.io.shapereader.Reader('data/hydro')
@@ -108,7 +129,7 @@ ax.add_geometries(interstate.geometries(), cartopy.crs.PlateCarree(),
 # LonW, LonE, LatN, LatS
 #ax.set_extent([-81.8, -80, 36, 34.5])
 
-norm, cmap = ctables.registry.get_with_steps('NWSReflectivity', 5, 5)
+norm, cmap = ctables.registry.get_with_steps(colorTable, 5, 5)
 ax.pcolormesh(x, y, ref, cmap=cmap, norm=norm, zorder=2)
 
 title_line1 = str(args.site)
