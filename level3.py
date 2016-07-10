@@ -48,6 +48,8 @@ minute = datetime.today().minute
 # What type of radar site is this?..
 	
 siteType = validation.checkRadarType(args.site)
+ncfVar = validation.checkProduct(args.product)
+colorTable = validation.checkColorTable(args.product)
 
 if siteType=='88D':
 	rs = RadarServer('http://thredds.ucar.edu/thredds/radarServer/nexrad/level3/IDD/')
@@ -75,15 +77,7 @@ ds.access_urls
 
 data = Dataset(ds.access_urls['CdmRemote'])
 
-#print (data.variables) ### DEBUG
-
-# We have to turn the user variable into the correct variable to pull...
-if (args.product=='TR0' or args.product=='N0Q'):
-	ncfVar='BaseReflectivity'
-	colorTable='NWSReflectivity'
-elif (args.product=='TV0' or args.product=='N0V'):
-	ncfVar='RadialVelocity'
-	colorTable='NWSVelocity'
+print (data.variables) ### DEBUG
 
 rng = data.variables['gate'][:]
 az = data.variables['azimuth'][:]

@@ -17,6 +17,49 @@ FAA_SITES = ['ADW','ATL','BNA','BOS','BWI','CLT','CMH','CVG','DAL','DAY','DCA','
 'STL','TBW','TPA','TUL']
 
 # Lists of valid products
+# BaseReflectivity
+# BaseReflectivityDR
+
+PRODUCTS_88D = {"N0Q":"BaseReflectivityDR",
+"N1Q":"BaseReflectivityDR",
+"N1Q":"BaseReflectivityDR",
+"N2Q":"BaseReflectivityDR",
+"N3Q":"BaseReflectivityDR",
+"TR0":"BaseReflectivity",
+"TR1":"BaseReflectivityDR",
+"TR2":"BaseReflectivityDR",
+"TR3":"BaseReflectivityDR",
+"N0U":"BaseVelocityDV",
+"N1U":"BaseVelocityDV",
+"N2U":"BaseVelocityDV",
+"N3U":"BaseVelocityDV",
+"DHR":"DigitalHybridReflectivity",
+"NCR":"BaseReflectivityComp",
+"NCZ":"BaseReflectivityComp",
+"NET":"EchoTops",
+"EET":"EnhancedEchoTops",
+"N0S":"StormRelativeVelocity",
+"N1S":"StormRelativeVelocity",
+"N2S":"StormRelativeVelocity",
+"N3S":"StormRelativeVelocity",
+"VIL":"VerticallyIntegratedLiquid",
+"N1P":"1HourRainfall",
+"N3P":"3HourRainfall",
+"NTP":"StormTotalRainfall",
+"DSP":"DigitalStormTotalPrecipitation",
+"N0X":"DigitalDifferentialReflectivity",
+"N1X":"DigitalDifferentialReflectivity",
+"N2X":"DigitalDifferentialReflectivity",
+"N3X":"DigitalDifferentialReflectivity",
+"N0C":"CorrelationCoefficient",
+"N1C":"CorrelationCoefficient",
+"N2C":"CorrelationCoefficient",
+"N3C":"CorrelationCoefficient"}
+
+FAA_PRODUCTS = {"TR0":"BaseReflectivity","TR1":"BaseReflectivity","TR2":"BaseReflectivity","TR3":"BaseReflectivity",
+"TV0":"BaseVelocity","TV1":"BaseVelocity","TV2":"BaseVelocity","TV3":"BaseVelocity",
+"DHR":"DigitalHybridReflectivity","NCR":"BaseReflectivityComp","NET":"EchoTops","NVL":"VerticalIntegratedLiquid",
+"DSP":"StormTotalPrecipitation"}
 
 # FUNCTIONS -----------------------------------------------------------------------------
 
@@ -32,3 +75,27 @@ def checkRadarType(site):
 			return 'TDWR'
 
 	return 'UNKNOWN SITE'
+
+# Find the product variable name...
+def checkProduct(product):
+
+	for i in PRODUCTS_88D:
+		if i==product:
+			return PRODUCTS_88D[i]
+
+	for i in FAA_PRODUCTS:
+		if i==product:
+			return FAA_PRODUCTS[i]
+
+	return 'UNAVAILABLE PRODUCT'
+
+def checkColorTable(product):
+	
+	if (product == 'N0Q' or product == 'N1Q' or product == 'N2Q' or product == 'N3Q' or
+product == 'TR0' or product == 'TR1' or product == 'TR2' or product == 'TR3' or product == 'DHR' or product == 'NCR'):
+		return 'NWSReflectivity'
+
+	elif (product == 'N0U' or product == 'N1U' or product == 'N2U' or product == 'N3U' or
+product == 'TV0' or product == 'TV1' or product == 'TV2' or product == 'TV3'):
+		return 'NWSVelocity'
+
