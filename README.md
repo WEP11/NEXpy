@@ -24,7 +24,7 @@ Once the project matures some, I will consider bundling it into an installation 
 1. [Get Anaconda](https://www.continuum.io/downloads)
 2. Open your terminal/command prompt/button masher
 3. Install the base packages:
-..* ```conda install pip numpy matplotlib ```
+  * ```conda install pip numpy matplotlib ```
 4. Now use pip to install the other requirements:
-..* ```pip install metpy siphon cartopy ```
+  * ```pip install metpy siphon cartopy ```
 5. Congratulations! Now you can run the command under "Usage" to get started
