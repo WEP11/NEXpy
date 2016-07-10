@@ -4,18 +4,11 @@
 #                                                     #
 #              Level-3, Single Site                   #
 #                                                     #
-#  UNC CHARLOTTE DEVELOPER: Warren Pettee (@wpettee)  #
+#            Warren Pettee (@wpettee)                 #
 #                                                     #
-#                   V 1.0.0                           #
 #                                                     #
 #######################################################
-#
-# CHANGELOG:
-# Authored - Aug-2015 (Warren Pettee)
-#
-#######################################################
-#
-#
+
 
 import argparse
 
