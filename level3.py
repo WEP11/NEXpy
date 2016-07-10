@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import cartopy
 from metpy.plots import ctables
 
-from mpl_toolkits.basemap import Basemap, shiftgrid
+#from mpl_toolkits.basemap import Basemap, shiftgrid
 
 #------------------------------------------------------
 # Command Line Functions:
