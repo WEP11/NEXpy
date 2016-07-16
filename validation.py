@@ -1,3 +1,16 @@
+######################################
+#                                    #
+#		     validation.py           #
+#                                    #
+######################################
+#
+# CONTAINS LISTS AND FUNCTIONS NECESSARY FOR
+# OBTAINING NEXRAD DATA
+#
+# Component of NEXpy
+#
+
+
 # Lists of valid radar sites
 NWS_SITES = ['ABR','ENX','ABX','AMA','AHG','GUA','FFC','BBX','ABC','BLX','BGM','ACG','BMX','BIS',
 'FCX','CBX','BOX','BRO','BUF','CXX','FDX','CBW','ICX','GRK','CLX','RLX','CYS','LOT','ILN',
@@ -25,10 +38,6 @@ PRODUCTS_88D = {"N0Q":"BaseReflectivityDR",
 "N1Q":"BaseReflectivityDR",
 "N2Q":"BaseReflectivityDR",
 "N3Q":"BaseReflectivityDR",
-"TR0":"BaseReflectivity",
-"TR1":"BaseReflectivityDR",
-"TR2":"BaseReflectivityDR",
-"TR3":"BaseReflectivityDR",
 "N0U":"BaseVelocityDV",
 "N1U":"BaseVelocityDV",
 "N2U":"BaseVelocityDV",

@@ -12,19 +12,91 @@
 
 import argparse
 import sys
+import time
+from datetime import datetime, timedelta
+
+import threading
+from threading import Thread
 
 from siphon.radarserver import RadarServer
-from datetime import datetime
 from siphon.cdmr import Dataset
+
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.animation as animation
+
+mpl.rcParams['toolbar'] = 'None'
+
 import cartopy
 
 from metpy.plots import ctables
-#from mpl_toolkits.basemap import Basemap, shiftgrid
 
 import validation
 #------------------------------------------------------
+
+def update(frame):
+	global SITE
+	global PRODUCT
+	
+	print("Building Frame:",frame)
+	#What is the age of this frame?
+	frameIndex = frame % 9
+	frameAge = frameIndex * 10 # minutes old
+
+	# WHAT TIME WILL THE FRAME BE??
+	date = datetime.utcnow() - timedelta(minutes=frameAge)
+	year = date.year
+	month = date.month
+	day = date.day
+	hour = date.hour
+	minute = date.minute
+
+
+	# What type of radar site is this?..
+	
+	siteType = validation.checkRadarType(SITE)
+	ncfVar = validation.checkProduct(PRODUCT)
+	colorTable = validation.checkColorTable(PRODUCT)
+
+	if siteType=='88D':
+		rs = RadarServer('http://thredds.ucar.edu/thredds/radarServer/nexrad/level3/IDD/')
+	elif siteType=='TDWR':
+		rs = RadarServer('http://thredds.ucar.edu/thredds/radarServer/terminal/level3/IDD/')
+	else:
+		print('INVALID SITE IDENTIFIER')
+		sys.exit()
+
+
+	# ACQUIRE DATA ----------------------------------------
+
+	query = rs.query()
+	query.stations(args.site).time(datetime(year,month,day,hour,minute)).variables(args.product)
+
+	rs.validate_query(query)
+
+	catalog = rs.get_catalog(query)
+
+	catalog.datasets
+
+	ds = list(catalog.datasets.values())[0]
+	ds.access_urls
+
+	# READ DATA ------------------------------------------
+	data = Dataset(ds.access_urls['CdmRemote'])
+
+	rng = data.variables['gate'][:]
+	az = data.variables['azimuth'][:]
+	ref = data.variables[ncfVar][:]
+
+	x = (rng * np.sin(np.deg2rad(az))[:, None])
+	y = (rng * np.cos(np.deg2rad(az))[:, None])
+	ref = np.ma.array(ref, mask=np.isnan(ref))
+	plot = ax.pcolormesh(x, y, ref, cmap=cmap, norm=norm, zorder=2)
+	title_line1 = '%s %s - %i:%i' % (args.site,args.product,hour,minute)
+	plt.title(title_line1,color='k',fontsize=18,fontweight='bold',style='italic')
+
+	return plot
 
 # Command Line Functions:
 parser = argparse.ArgumentParser(description='NEXRAD/TDWR Site Information')
@@ -33,17 +105,22 @@ parser.add_argument('site',
                     help='3-Letter Site Identifier (WSR-88D or TDWR)')
 parser.add_argument('product',
                     help='3-Letter Product Identifier (See RPCCDS list at NWS)\nExample:Reflectivity(N0R or TR0)\nVelocity(N0V or TV0)')
+parser.add_argument('animate',
+                    help='Build animated image? "true" or "false"')
 
 args = parser.parse_args()
 
-# WHAT TIME IS IT? ------------------------------------
-year = datetime.today().year
-month = datetime.today().month
-day = datetime.today().day
-hour = datetime.today().hour
-minute = datetime.today().minute
+SITE=args.site
+PRODUCT=args.product
 
-## TODO: Find previous frame times. timedelta?
+# WHAT TIME IS IT? ------------------------------------
+date = datetime.utcnow()
+year = datetime.utcnow().year
+month = datetime.utcnow().month
+day = datetime.utcnow().day
+hour = datetime.utcnow().hour
+minute = datetime.utcnow().minute
+
 
 # What type of radar site is this?..
 	
@@ -59,10 +136,11 @@ else:
 	print('INVALID SITE IDENTIFIER')
 	sys.exit()
 
+
 # ACQUIRE DATA ----------------------------------------
 
 query = rs.query()
-query.stations(args.site).time(datetime(year, month, day, hour, minute)).variables(args.product)
+query.stations(args.site).time(datetime(year,month,day,hour,minute)).variables(args.product)
 
 rs.validate_query(query)
 
@@ -74,20 +152,21 @@ ds = list(catalog.datasets.values())[0]
 ds.access_urls
 
 # READ DATA ------------------------------------------
-
+print("--- AQUIRING DATA ---")
 data = Dataset(ds.access_urls['CdmRemote'])
-
-print (data.variables) ### DEBUG
+print("Aquisition Complete!!")
+#print (data.variables) ### DEBUG
 
 rng = data.variables['gate'][:]
 az = data.variables['azimuth'][:]
 ref = data.variables[ncfVar][:]
 
-x = rng * np.sin(np.deg2rad(az))[:, None]
-y = rng * np.cos(np.deg2rad(az))[:, None]
+x = (rng * np.sin(np.deg2rad(az))[:, None])
+y = (rng * np.cos(np.deg2rad(az))[:, None])
 ref = np.ma.array(ref, mask=np.isnan(ref))
 
 # BEGIN PLOTTING --------------------------------------------------
+### TODO: Losing loading time in county rendering.. fix me
 
 # Create projection centered on the radar. This allows us to use x
 # and y relative to the radar.
@@ -98,6 +177,7 @@ proj = cartopy.crs.LambertConformal(central_longitude=data.RadarLongitude,
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(1, 1, 1, projection=proj)
 
+print("Loading geography overlays...")
 # Grab state borders
 #state_borders = cartopy.feature.NaturalEarthFeature(
 #    category='cultural', name='admin_1_states_provinces_lines',
@@ -110,9 +190,9 @@ ax.add_geometries(counties.geometries(), cartopy.crs.PlateCarree(),
                   facecolor='#C2A385', edgecolor='grey', zorder=1)
 
 # Interstates
-#interstate = cartopy.io.shapereader.Reader('data/interstates')
-#ax.add_geometries(interstate.geometries(), cartopy.crs.PlateCarree(),
-#                  facecolor='none', edgecolor='#B20000', zorder=1)
+interstate = cartopy.io.shapereader.Reader('data/interstates')
+ax.add_geometries(interstate.geometries(), cartopy.crs.PlateCarree(),
+                  facecolor='none', edgecolor='#B20000', zorder=1)
 
 # Hydrography
 #hydro = cartopy.io.shapereader.Reader('data/hydro')
@@ -123,11 +203,16 @@ ax.add_geometries(counties.geometries(), cartopy.crs.PlateCarree(),
 # LonW, LonE, LatN, LatS
 #ax.set_extent([-81.8, -80, 36, 34.5])
 
+print("Building Figure...")
 norm, cmap = ctables.registry.get_with_steps(colorTable, 5, 5)
-ax.pcolormesh(x, y, ref, cmap=cmap, norm=norm, zorder=2)
-
-title_line1 = str(args.site)
+plot = ax.pcolormesh(x, y, ref, cmap=cmap, norm=norm, zorder=2)
+#ax.contourf(x, y, ref, cmap=cmap, norm=norm, zorder=2)
+title_line1 = '%s %s - %i:%i' % (args.site,args.product,hour,minute)
 plt.title(title_line1,color='k',fontsize=18,fontweight='bold',style='italic')
-#plt.savefig('/home/warren/Desktop/nexpy/TCLTref.png',format='png')
+
+if args.animate == 'true':
+	animation = animation.FuncAnimation(fig, update, interval=15, blit=False, frames=10)
+	animation.save('nexpy.gif', writer='imagemagick', fps=15, dpi=40)
 
 plt.show()
+
