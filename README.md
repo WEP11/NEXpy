@@ -1,5 +1,5 @@
 # NEXpy
-NEXpy is a simple Python radar tool using siphon to obtain the data and metPy for color tables. Requirements are subject to change as we find the most stable (and fast!) configuration for this program.
+NEXpy is a simple Python radar tool using siphon, metpy, and a couple of other things. This is intended to be a quick-solution plotting tool for lazy people like me who still want decent looking loops. Requirements are subject to change as I find the most stable (and fast!) configuration for this program.
 
 Requirements
 ------
@@ -30,3 +30,7 @@ Once the project matures some, I will consider bundling it into an installation 
 4. Now use pip to install the other requirements:
   * ```pip install metpy siphon cartopy ```
 5. Congratulations! Now you can run the command under "Usage" to get started
+
+Additional Information
+------
+The plan is to support all Level-III product types in both the archived and real-time environments. Level-II data is also in the pipeline, but I am still deciding on whether to use PyART or MetPy to do the job.
